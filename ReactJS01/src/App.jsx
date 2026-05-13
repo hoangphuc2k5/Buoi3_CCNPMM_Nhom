@@ -1,54 +1,28 @@
-import { Outlet } from "react-router-dom";
-import Header from "./components/layout/header";
-import axios from "./util/axios.customize"
-import { useContext, useEffect } from "react"
-import { AuthContext } from "./components/context/auth.context";
-import { Spin } from "antd";
+import {
+    BrowserRouter,
+    Routes,
+    Route,
+    Navigate
+} from "react-router-dom";
+
+import ForgotPassword
+from "./pages/forgotPassword";
+
+import ResetPassword
+from "./pages/resetPassword";
 
 function App() {
 
-    const { setAuth, appLoading, setAppLoading } = useContext(AuthContext);
-
-    useEffect(() => {
-        const fetchAccount = async () => {
-            setAppLoading(true);
-            const res = await axios.get(`/v1/api/user`);
-            if (res && !res.message) {
-                setAuth({
-                    isAuthenticated: true,
-                    user: {
-                        email: res.email,
-                        name: res.name
-                    }
-                })
-            }
-            setAppLoading(false);
-        }
-
-        fetchAccount()
-    }, [])
-
     return (
-        <div>
-            {appLoading === true ?
-                <div style={{
-                    position: "fixed",
-                    top: "50%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%)"
-                }}>
-
-                    <Spin />
-
-                </div>
-                :
-                <>
-                    <Header />
-                    <Outlet />
-                </>
-            }
-        </div>
-    )
+        <BrowserRouter>
+            <Routes>
+                <Route path="/" element={<Navigate replace to="/forgot-password" />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="*" element={<Navigate replace to="/forgot-password" />} />
+            </Routes>
+        </BrowserRouter>
+    );
 }
 
-export default App
+export default App;
