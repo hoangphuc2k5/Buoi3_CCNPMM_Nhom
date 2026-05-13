@@ -16,14 +16,17 @@ const sendOtpMail = async (
 ) => {
 
     await transporter.sendMail({
-        from: `"Hệ thống" <${process.env.SMTP_USER}>`,
-            to: email,
-            subject: 'Mã OTP đặt lại mật khẩu',
-            html: `
-                <h2>Mã OTP của bạn là:</h2>
-                <h1 style="letter-spacing: 8px; color: #2563eb;">${otp}</h1>
-                <p>Mã có hiệu lực trong <b>5 phút</b>.</p>
-            `
+        from: process.env.EMAIL_USER,
+
+        to: email,
+
+        subject: "Forgot Password OTP",
+
+        html: `
+            <h2>Mã OTP của bạn</h2>
+            <h1>${otp}</h1>
+            <p>OTP có hiệu lực trong 5 phút</p>
+        `
     });
 };
 
