@@ -1,21 +1,19 @@
 require("dotenv").config();
 const User = require("../models/user");
+const Otp = require("../models/otp"); // ++ thêm từ file trên
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const sendOtpMail = require("./sendMail"); // ++ thêm từ file trên
 const saltRounds = 10;
 
 const createUserService = async (name, email, password) => {
   try {
-    //check user exist
     const user = await User.findOne({ email });
     if (user) {
       console.log(`>>> user exist, chon 1 email khac: ${email}`);
       return null;
     }
-
-    //hash user password
     const hashPassword = await bcrypt.hash(password, saltRounds);
-    //save user to database
     let result = await User.create({
       name: name,
       email: email,
@@ -31,10 +29,8 @@ const createUserService = async (name, email, password) => {
 
 const loginService = async (email1, password) => {
   try {
-    //fetch user by email
     const user = await User.findOne({ email: email1 });
     if (user) {
-      //compare password
       const isMatchPassword = await bcrypt.compare(password, user.password);
       if (!isMatchPassword) {
         return {
@@ -42,13 +38,11 @@ const loginService = async (email1, password) => {
           EM: "Email/Password khong hop le",
         };
       } else {
-        //create an access token
         const payload = {
           _id: user._id,
           email: user.email,
           name: user.name,
         };
-
         const access_token = jwt.sign(payload, process.env.JWT_SECRET, {
           expiresIn: process.env.JWT_EXPIRE,
         });
@@ -130,27 +124,87 @@ const updateProfileService = async (userId, updateData) => {
   }
 };
 
+// ++ thay thế forgotPasswordService cũ bằng logic OTP đầy đủ từ file trên
 const forgotPasswordService = async (email) => {
-    try {
-        const user = await User.findOne({ email });
-        if (!user) {
-            return {
-                EC: 1,
-                EM: "Email khong ton tai"
-            };
-        }
-        return {
-            EC: 0,
-            EM: "Yeu cau khoi phuc da duoc ghi nhan"
-        };
-    } catch (error) {
-        console.log(error);
-        return {
-            EC: 2,
-            EM: "Co loi xay ra"
-        };
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return {
+        EC: 1,
+        EM: "Email không tồn tại",
+      };
     }
-}
+
+    // tạo otp
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // xóa otp cũ
+    await Otp.deleteMany({ email });
+
+    // lưu otp mới kèm thời gian hết hạn 5 phút
+    await Otp.create({
+      email: email,
+      otp: otp,
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+    });
+
+    // gửi mail
+    await sendOtpMail(email, otp);
+
+    return {
+      EC: 0,
+      EM: "Gửi OTP thành công",
+      email,
+    };
+  } catch (error) {
+    console.log(error);
+    return {
+      EC: -1,
+      EM: "Server error",
+    };
+  }
+};
+
+// ++ thêm resetPasswordService từ file trên
+const resetPasswordService = async (email, otp, newPassword) => {
+  try {
+    const otpData = await Otp.findOne({ email, otp });
+    if (!otpData) {
+      return {
+        EC: 1,
+        EM: "OTP không đúng",
+      };
+    }
+
+    // check hết hạn
+    if (new Date() > otpData.expiresAt) {
+      return {
+        EC: 2,
+        EM: "OTP đã hết hạn",
+      };
+    }
+
+    // hash password mới
+    const hashPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    // update password
+    await User.findOneAndUpdate({ email }, { password: hashPassword });
+
+    // xóa otp
+    await Otp.deleteMany({ email });
+
+    return {
+      EC: 0,
+      EM: "Đổi mật khẩu thành công",
+    };
+  } catch (error) {
+    console.log(error);
+    return {
+      EC: -1,
+      EM: "Server error",
+    };
+  }
+};
 
 module.exports = {
   createUserService,
@@ -158,6 +212,6 @@ module.exports = {
   getUserService,
   getProfileService,
   updateProfileService,
+  forgotPasswordService,
+  resetPasswordService, // ++ export thêm
 };
-    createUserService, loginService, getUserService, forgotPasswordService
-}

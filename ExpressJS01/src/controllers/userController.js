@@ -4,8 +4,8 @@ const {
   getUserService,
   getProfileService,
   updateProfileService,
+  forgotPasswordService, // ++ thêm từ đoạn cũ
 } = require("../services/userService");
-const { createUserService, loginService, getUserService, forgotPasswordService } = require("../services/userService");
 
 const createUser = async (req, res) => {
   const { name, email, password } = req.body;
@@ -16,7 +16,6 @@ const createUser = async (req, res) => {
 const handleLogin = async (req, res) => {
   const { email, password } = req.body;
   const data = await loginService(email, password);
-
   return res.status(200).json(data);
 };
 
@@ -63,10 +62,10 @@ const updateProfile = async (req, res) => {
 };
 
 const forgotPassword = async (req, res) => {
-    const { email } = req.body;
-    const data = await forgotPasswordService(email);
-    return res.status(200).json(data);
-}
+  const { email } = req.body;
+  const data = await forgotPasswordService(email);
+  return res.status(200).json(data);
+};
 
 module.exports = {
   createUser,
@@ -75,6 +74,5 @@ module.exports = {
   getAccount,
   getProfile,
   updateProfile,
+  forgotPassword, // ++ thêm vào export
 };
-    createUser, handleLogin, getUser, getAccount, forgotPassword
-}

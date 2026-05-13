@@ -9,12 +9,7 @@ const {
 } = require("../controllers/userController");
 const auth = require("../middleware/auth");
 const delay = require("../middleware/delay");
-const express = require('express');
-const { createUser, handleLogin, getUser,
-    getAccount, forgotPassword
-} = require('../controllers/userController');
-const auth = require('../middleware/auth');
-const delay = require('../middleware/delay');
+const forgotPasswordRoutes = require("./forgotPasswordRoutes"); // ++ thêm
 
 const routerAPI = express.Router();
 
@@ -26,7 +21,6 @@ routerAPI.get("/", (req, res) => {
 
 routerAPI.post("/register", createUser);
 routerAPI.post("/login", handleLogin);
-routerAPI.post("/forgot-password", forgotPassword);
 
 routerAPI.get("/user", getUser);
 routerAPI.get("/account", delay, getAccount);
@@ -35,4 +29,7 @@ routerAPI.get("/account", delay, getAccount);
 routerAPI.get("/profile", delay, getProfile);
 routerAPI.put("/profile", updateProfile);
 
-module.exports = routerAPI; //export default
+// Forgot/Reset password routes ++ 
+routerAPI.use("/auth", forgotPasswordRoutes);
+
+module.exports = routerAPI;
